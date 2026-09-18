@@ -123,8 +123,7 @@ button.ghost:hover{background:rgba(139,26,26,.14)}
     Teaching, Assessing and Reporting Policy, and are aligned with the laws of the Lao PDR, including the Law on the
     Protection of the Rights and Interests of Children 2006 (Amended 2023), the Labour Law and the Law on Electronic
     Data Protection.</p>
-    <p>The named organisations have not endorsed or partnered with this assessment; they are credited as reference
-    sources. Administered by the Department of the International Curriculum, Golden International School, Vientiane.</p>
+    <p>Administered by the Department of the International Curriculum, Golden International School, Vientiane.</p>
     <button class="close" onclick="hideCredits()">Close</button>
   </div>
 </div>
@@ -420,7 +419,7 @@ window.go=d=>{stopSpeech();
 function render(){
   const sec=SECTIONS[cur];const app=$("#app");progress();
   if(sec.kind==="auth"){renderAuth();return;}
-  $("#who").textContent=state.name?state.name+" \u00b7 signed in":"";
+  const who=$("#who"); if(state.name){who.innerHTML=state.name+' \u00b7 <a style="color:var(--crim);cursor:pointer;font-weight:600" onclick="signOut()">Sign out</a>';} else who.textContent="";
   if(sec.kind==="story"){
     const st=sec.st;let n=0;
     app.innerHTML=`<section class="sec on"><h2>${st.title}</h2><p class="src">Source: ${st.src}</p>
@@ -467,6 +466,8 @@ function renderAuth(){
       Retake as many times as you need \u2014 attempts are logged and your best result is what counts.
       Passing teachers receive their certificate at the end of September.</p>
   </div>`;
+  ["le","lp"].forEach(id=>{const el=$("#"+id);if(el)el.addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});});
+  ["rn","re","rp"].forEach(id=>{const el=$("#"+id);if(el)el.addEventListener("keydown",e=>{if(e.key==="Enter")doRegister();});});
 }
 window.authTab=t=>{
   $("#tabL").classList.toggle("on",t==="L");$("#tabR").classList.toggle("on",t==="R");
@@ -481,6 +482,7 @@ async function afterAuth(res){
   if(cur<1||cur>=SECTIONS.length-1)cur=1;
   render();
 }
+window.signOut=()=>{try{localStorage.removeItem("gisauth");}catch(e){}location.reload();};
 window.doLogin=async()=>{
   const email=$("#le").value.trim(),pw=$("#lp").value;
   if(!email||!pw){toast("Enter your email and password",true);return;}
@@ -515,7 +517,7 @@ async function submitAndShow(){
   app.innerHTML=`<p class="note" style="text-align:center;padding:40px 0">Submitting your assessment\u2026</p>`;
   const {score,wrong}=grade();const pass=score>=PASS;
   let code="",serverOk=false;
-  try{const res=await api("submit",{email:state.email,token:state.token,score,total:TOTAL,pass});
+  try{const res=await api("submit",{email:state.email,token:state.token,score,total:TOTAL,pass,answers:JSON.stringify({idPick:state.idPick,answers:state.answers}).slice(0,28000)});
     if(res.ok){code=res.code||"";serverOk=true;}
   }catch(e){}
   const date=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
